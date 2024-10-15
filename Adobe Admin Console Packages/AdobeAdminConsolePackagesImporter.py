@@ -406,16 +406,15 @@ def get_autopkg_dirs(user_name: str) -> (list, str):
     # If "RECIPE_OVERRIDE_DIRS" is defined within "autopkg_preferences"
     if 'RECIPE_OVERRIDE_DIRS' in autopkg_preferences:
         # Set "override_dirs" to "RECIPE_OVERRIDE_DIRS"
-        override_dirs = os.path.expanduser(autopkg_preferences['RECIPE_OVERRIDE_DIRS']).split()
+        # If override_dirs is a list
+        if isinstance(autopkg_preferences['RECIPE_OVERRIDE_DIRS'], list):
+            override_dirs = [os.path.expanduser(x) for x in autopkg_preferences['RECIPE_OVERRIDE_DIRS']]
+        else:
+            override_dirs = [os.path.expanduser(autopkg_preferences['RECIPE_OVERRIDE_DIRS'])]
     # If not defined
     else:
         # Set to the default path
         override_dirs = [os.path.expanduser('~/Library/AutoPkg/RecipeOverrides')]
-
-    # If override_dirs is a string
-    if isinstance(override_dirs, str):
-        # Convert to list, expanding if needed
-        override_dirs = [os.path.expanduser(override_dirs)]
 
     # Progress notification
     print("Using override dir(s):")
@@ -918,6 +917,7 @@ def read_json_file(json_path: str) -> dict:
         # Print error
         print(f"ERROR: Attempting to convert the content of {json_path} to dict, "
               f"failed with error error: {err_msg}")
+        raise err_msg
         # Exit
         sys.exit(0)
 
@@ -960,6 +960,7 @@ def read_plist_file(plist_path: str) -> dict:
         # Print error
         print(f"ERROR: Attempting to convert the content of {plist_path} to dict, "
               f"failed with error error: {err_msg}")
+        raise err_msg
         # Exit
         sys.exit(0)
 
@@ -1281,8 +1282,8 @@ def update_overrides(adobe_installers: dict):
         # If a yaml file
         if (installer_data['aacp_override_path'].endswith('.yml') or
                 installer_data['aacp_override_path'].endswith('.yaml')):
-            # Read in the override as a plist
-            override_content = read_plist_file(installer_data['aacp_override_path'])
+            # Read in the override as a yaml file
+            override_content = read_yaml_file(installer_data['aacp_override_path'])
             # Update the content with data in "installer_data"
             override_content = update_override_content(installer_data, override_content)
             # Try to read it as yaml
